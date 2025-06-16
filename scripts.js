@@ -109,3 +109,256 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
+//CHATBOT
+const chatToggle = document.getElementById('chatToggle');
+const chatBox = document.getElementById('chatBox');
+const chatClose = document.getElementById('chatClose');
+const chatContent = document.getElementById('chatContent');
+const chatForm = document.getElementById('chatForm');
+const userInput = document.getElementById('userInput');
+const chatRestart = document.getElementById('chatRestart');
+
+const servicios = [
+  'Pintura y acabados',
+  'Instalación de cubiertas',
+  'Reparación de techos',
+  'Albañilería',
+  'Trabajo con madera y herramientas',
+  'Reparación de Llamas',
+  'Alisados',
+  'Instalación de Pladur',
+];
+
+const STORAGE_KEY = 'chatbot_history';
+let mensajes = [];
+let paso = 1;
+let esperandoDescripcion = false;
+let servicioActual = '';
+let serviciosSeleccionados = [];
+
+// --- LocalStorage ---
+function cargarHistorial() {
+  const historialJSON = localStorage.getItem(STORAGE_KEY);
+  if (historialJSON) {
+    try {
+      return JSON.parse(historialJSON);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function guardarHistorial(mensajes) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mensajes));
+}
+
+// --- Renderizado ---
+function renderizarMensajes() {
+  chatContent.innerHTML = '';
+  mensajes.forEach(({ tipo, texto }) => {
+    const div = document.createElement('div');
+    div.className = tipo === 'bot' ? 'bot-message' : 'user-message';
+    div.innerText = texto;
+    chatContent.appendChild(div);
+  });
+  chatContent.scrollTop = chatContent.scrollHeight;
+}
+
+function agregarMensaje(texto, tipo = 'bot') {
+  mensajes.push({ tipo, texto });
+  guardarHistorial(mensajes);
+
+  const mensaje = document.createElement('div');
+  mensaje.className = tipo === 'bot' ? 'bot-message' : 'user-message';
+  mensaje.innerText = texto;
+  chatContent.appendChild(mensaje);
+  chatContent.scrollTop = chatContent.scrollHeight;
+}
+
+// --- Bot "pensando" efecto ---
+function agregarPensando() {
+  const thinking = document.createElement('div');
+  thinking.className = 'bot-message thinking';
+  thinking.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+  chatContent.appendChild(thinking);
+  chatContent.scrollTop = chatContent.scrollHeight;
+  return thinking;
+}
+
+function quitarPensando(element) {
+  if (element) chatContent.removeChild(element);
+}
+
+// --- Respuestas ---
+async function responder(texto) {
+  const thinking = agregarPensando();
+  await new Promise((r) => setTimeout(r, 800 + Math.random() * 700));
+  quitarPensando(thinking);
+  agregarMensaje(texto, 'bot');
+}
+
+// --- Mostrar opciones ---
+async function mostrarOpciones() {
+  let texto = "Por favor, selecciona un servicio escribiendo el número:\n";
+  servicios.forEach((s, i) => {
+    texto += `${i + 1}. ${s}\n`;
+  });
+  texto += `\nCuando termines, escribe "listo".`;
+  await responder(texto);
+}
+
+// --- Reiniciar conversación ---
+async function reiniciarConversacion() {
+  localStorage.removeItem(STORAGE_KEY);
+  mensajes = [];
+  paso = 1;
+  serviciosSeleccionados = [];
+  esperandoDescripcion = false;
+  servicioActual = '';
+  chatContent.innerHTML = '';
+  await responder("🔄 Conversación reiniciada.");
+  await responder("¡Hola! Soy el asistente virtual de Cubiertas y más | J. Ortiz. ¿En qué puedo ayudarte?");
+  await mostrarOpciones();
+  paso = 2;
+}
+
+// --- Inicio ---
+async function iniciarConversacion() {
+  mensajes = cargarHistorial();
+  if (mensajes.length === 0) {
+    await reiniciarConversacion();
+  } else {
+    renderizarMensajes();
+    paso = 2;
+  }
+}
+
+// --- Procesar entrada del usuario ---
+async function procesarEntrada(input) {
+  const texto = input.trim().toLowerCase();
+  if (!texto) return;
+
+  agregarMensaje(input, 'user');
+
+  // --- Reinicio ---
+  if (texto === 'reiniciar' || texto === 'empezar de nuevo') {
+    await reiniciarConversacion();
+    return;
+  }
+
+  // --- Nombre ---
+  const nombreMatch = texto.match(/(?:me llamo|mi nombre es)\s+([a-záéíóúñ\s]+)/i);
+  if (nombreMatch) {
+    const nombre = nombreMatch[1].trim();
+    const campoNombre = document.getElementById('name');
+    if (campoNombre) campoNombre.value = nombre;
+    await responder(`Encantado, ${nombre}. He guardado tu nombre en el formulario. 😊`);
+    const seccionContacto = document.getElementById('contact');
+    if (seccionContacto) seccionContacto.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  // --- Correo ---
+  const correoMatch = texto.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+  if (correoMatch) {
+    const correo = correoMatch[0];
+    const campoEmail = document.getElementById('email');
+    if (campoEmail) campoEmail.value = correo;
+    await responder(`📧 He añadido tu correo (${correo}) al formulario.`);
+    const seccionContacto = document.getElementById('contact');
+    if (seccionContacto) seccionContacto.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  // --- Teléfono ---
+  const telefonoMatch = texto.match(/(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}/g);
+  if (telefonoMatch) {
+    const telefono = telefonoMatch[0];
+    const campoTelefono = document.getElementById('phone');
+    if (campoTelefono) campoTelefono.value = telefono;
+    await responder(`📞 He guardado tu número (${telefono}) en el formulario.`);
+    const seccionContacto = document.getElementById('contact');
+    if (seccionContacto) seccionContacto.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  if (paso === 1) {
+    await mostrarOpciones();
+    paso = 2;
+    return;
+  }
+
+  if (paso === 2) {
+    if (esperandoDescripcion) {
+      serviciosSeleccionados.push({ servicio: servicioActual, descripcion: input.trim() });
+      esperandoDescripcion = false;
+      servicioActual = '';
+      await responder(`✅ Descripción guardada para el servicio.`);
+      await responder(`Puedes seleccionar otro servicio o escribir "listo" para terminar.`);
+      return;
+    }
+
+    if (texto === 'listo') {
+      if (serviciosSeleccionados.length === 0) {
+        await responder("Por favor, selecciona al menos un servicio antes de terminar.");
+        return;
+      }
+
+      let resumen = "Gracias por la información. Aquí tienes un resumen de tus solicitudes:\n\n";
+      serviciosSeleccionados.forEach((item, i) => {
+        resumen += `${i + 1}. ${item.servicio}:\n   ${item.descripcion}\n\n`;
+      });
+
+      await responder(resumen);
+      await responder("Puedes contactarnos al teléfono 645 059878 o visitar nuestra web https://j-ortiz-web.netlify.app/ para más detalles.");
+      await responder('Si deseas comenzar de nuevo, escribe "reiniciar".');
+
+      const seccionContacto = document.getElementById('contact');
+      if (seccionContacto) seccionContacto.scrollIntoView({ behavior: 'smooth' });
+
+      paso = 3;
+      return;
+    }
+
+    let num = parseInt(texto);
+    if (!isNaN(num) && num >= 1 && num <= servicios.length) {
+      servicioActual = servicios[num - 1];
+      esperandoDescripcion = true;
+      await responder(`Has seleccionado: "${servicioActual}". Por favor, descríbeme cuál es el problema o trabajo específico que necesitas con este servicio.`);
+    } else {
+      await responder('Opción no válida. Por favor, escribe un número de la lista o "listo" para terminar.');
+    }
+    return;
+  }
+
+  if (paso === 3) {
+    await responder('Gracias por usar nuestro asistente. Si deseas comenzar de nuevo, escribe "reiniciar".');
+  }
+}
+
+// --- Eventos ---
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = userInput.value;
+  if (input.trim()) {
+    userInput.value = '';
+    await procesarEntrada(input);
+  }
+});
+
+chatToggle.addEventListener('click', () => {
+  chatBox.style.display = 'flex';
+  chatToggle.style.display = 'none';
+  userInput.focus();
+  iniciarConversacion();
+});
+
+chatClose.addEventListener('click', () => {
+  chatBox.style.display = 'none';
+  chatToggle.style.display = 'flex';
+});
+
+chatRestart.addEventListener('click', async () => {
+  await reiniciarConversacion();
+});
