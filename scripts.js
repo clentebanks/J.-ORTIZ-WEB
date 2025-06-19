@@ -362,3 +362,40 @@ chatClose.addEventListener('click', () => {
 chatRestart.addEventListener('click', async () => {
   await reiniciarConversacion();
 });
+//form send google sheets script
+  // const scriptURL = 'https://script.google.com/macros/s/AKfycbxMl5XAocxYAM1yHC9nQ6lHBd5vc_2UJ9T2Z3qsVSyWPjLGfvALhraGeyq4J2f6PgHOKQ/exec'
+  // const form = document.forms['moncho-form']
+
+  // form.addEventListener('submit', e => {
+  //   e.preventDefault()
+  //   fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+  //     .then(response => console.log('Success!', response))
+  //     .catch(error => console.error('Error!', error.message))
+  // })
+
+
+  /**CONTACT FORM para enviar a google sheets los datos */
+const scriptURL = 'https://script.google.com/macros/s/AKfycbxOcPtA9RHX5ubso9qPbYdju6zkqIlx9mHF-ryeqb5klBG0F77X439eI0TOe3mZvPm-/exec'
+  const form = document.forms['submit-to-google-sheet']
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+  
+    try {
+      const response = await fetch(scriptURL, {
+        method: 'POST',
+        body: new FormData(form),
+      });
+  
+      if (response.ok) {
+        alert('✅ Formulario enviado con éxito.');
+        form.reset(); // Limpia el formulario después de enviarlo
+      } else {
+        throw new Error(`Error en la respuesta: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('❌ Ocurrió un error al enviar el formulario. Por favor, inténtalo de nuevo.');
+      console.error('Detalles del error:', error);
+    }
+  });
+  
