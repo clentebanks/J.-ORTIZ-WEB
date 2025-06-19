@@ -1,5 +1,5 @@
  /**CONTACT FORM para enviar a google sheets los datos */
-const scriptURL = 'https://script.google.com/macros/s/AKfycbyaTa7BAqYfaErLNYqhF7U_GXFWD0huglqkE5kKXKngJe61-oLYdkAgUwHk3bTNyv6a/exec'
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwGgsBAgPq0HxwjZ9o8J9MtGu3kYjxvwdDR7haXIqouTP6pXuCnJ4NiDY5xk2dVHTz9/exec'
   const form = document.forms['submit-to-google-sheet']
 
   form.addEventListener('submit', async (e) => {
