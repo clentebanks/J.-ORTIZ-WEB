@@ -164,7 +164,7 @@ let serviciosSeleccionados = [];
 
 // --- Enviar a Google Sheets ---
 async function guardarEnGoogleSheets() {
-  const url = 'https://script.google.com/macros/s/AKfycbySvyKwwoLgPrbGQzTjZ89RS_TxQlEGsSN3jD6Uvg6h3QBXXookGuqG3BUWvlCS_JYK/exec'; // 👈 Reemplaza esto con tu URL real
+  const url = 'https://script.google.com/macros/s/AKfycbzZLB8hTPMjKkTuvo6fpRljXP5dHyhkjq1fg1mjbc2Y-hRc2oowJMlPuBFF29dI8yHx/exec'; // 👈 Reemplaza esto con tu URL real
   try {
     const response = await fetch(url, {
       method: 'POST',
