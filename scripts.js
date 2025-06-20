@@ -23,12 +23,7 @@ const scriptURL = 'https://script.google.com/macros/s/AKfycbwGgsBAgPq0HxwjZ9o8J9
     }
   });
   
- 
- 
- 
- 
- 
- 
+
  // Mobile menu toggle
         document.getElementById('mobile-menu-button').addEventListener('click', function() {
             const menu = document.getElementById('mobile-menu');
@@ -140,7 +135,7 @@ const scriptURL = 'https://script.google.com/macros/s/AKfycbwGgsBAgPq0HxwjZ9o8J9
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-//CHATBOT
+//BOT
 const chatToggle = document.getElementById('chatToggle');
 const chatBox = document.getElementById('chatBox');
 const chatClose = document.getElementById('chatClose');
@@ -166,6 +161,24 @@ let paso = 1;
 let esperandoDescripcion = false;
 let servicioActual = '';
 let serviciosSeleccionados = [];
+
+// --- Enviar a Google Sheets ---
+async function guardarEnGoogleSheets() {
+  const url = 'https://script.google.com/macros/s/AKfycbySvyKwwoLgPrbGQzTjZ89RS_TxQlEGsSN3jD6Uvg6h3QBXXookGuqG3BUWvlCS_JYK/exec'; // 👈 Reemplaza esto con tu URL real
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ mensajes }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    console.log('✅ Enviado a Google Sheets:', data);
+  } catch (error) {
+    console.error('❌ Error al enviar a Sheets:', error);
+  }
+}
 
 // --- LocalStorage ---
 function cargarHistorial() {
@@ -272,13 +285,11 @@ async function procesarEntrada(input) {
 
   agregarMensaje(input, 'user');
 
-  // --- Reinicio ---
   if (texto === 'reiniciar' || texto === 'empezar de nuevo') {
     await reiniciarConversacion();
     return;
   }
 
-  // --- Nombre ---
   const nombreMatch = texto.match(/(?:me llamo|mi nombre es)\s+([a-záéíóúñ\s]+)/i);
   if (nombreMatch) {
     const nombre = nombreMatch[1].trim();
@@ -290,7 +301,6 @@ async function procesarEntrada(input) {
     return;
   }
 
-  // --- Correo ---
   const correoMatch = texto.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
   if (correoMatch) {
     const correo = correoMatch[0];
@@ -302,7 +312,6 @@ async function procesarEntrada(input) {
     return;
   }
 
-  // --- Teléfono ---
   const telefonoMatch = texto.match(/(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}/g);
   if (telefonoMatch) {
     const telefono = telefonoMatch[0];
@@ -344,6 +353,9 @@ async function procesarEntrada(input) {
       await responder(resumen);
       await responder("Puedes contactarnos al teléfono 645 059878 o visitar nuestra web https://j-ortiz-web.netlify.app/ para más detalles.");
       await responder('Si deseas comenzar de nuevo, escribe "reiniciar".');
+
+      // 👇 Aquí se guarda en Google Sheets
+      await guardarEnGoogleSheets();
 
       const seccionContacto = document.getElementById('contact');
       if (seccionContacto) seccionContacto.scrollIntoView({ behavior: 'smooth' });
@@ -393,6 +405,7 @@ chatClose.addEventListener('click', () => {
 chatRestart.addEventListener('click', async () => {
   await reiniciarConversacion();
 });
+
 
 
 
