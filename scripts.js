@@ -136,6 +136,9 @@ const scriptURL = 'https://script.google.com/macros/s/AKfycbwGgsBAgPq0HxwjZ9o8J9
   });
 
 //BOT
+// --- Configuración ---
+const SHEET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpNsjx80Z_ggH2qy08i1QpObqDFdREaghOEmdjJh8TJJ5PiioAoozNhBXs86TzLRM/exec'; // <--- Pega tu URL aquí
+
 const chatToggle = document.getElementById('chatToggle');
 const chatBox = document.getElementById('chatBox');
 const chatClose = document.getElementById('chatClose');
@@ -162,16 +165,13 @@ let esperandoDescripcion = false;
 let servicioActual = '';
 let serviciosSeleccionados = [];
 
-// --- Enviar a Google Sheets ---
+// --- Guardar mensajes en Google Sheets ---
 async function guardarEnGoogleSheets() {
-  const url = 'https://script.google.com/macros/s/AKfycbzZLB8hTPMjKkTuvo6fpRljXP5dHyhkjq1fg1mjbc2Y-hRc2oowJMlPuBFF29dI8yHx/exec'; // 👈 Reemplaza esto con tu URL real
   try {
-    const response = await fetch(url, {
+    const response = await fetch(SHEET_SCRIPT_URL, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mensajes }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
     const data = await response.json();
     console.log('✅ Enviado a Google Sheets:', data);
@@ -197,7 +197,7 @@ function guardarHistorial(mensajes) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(mensajes));
 }
 
-// --- Renderizado ---
+// --- Renderizar mensajes ---
 function renderizarMensajes() {
   chatContent.innerHTML = '';
   mensajes.forEach(({ tipo, texto }) => {
@@ -267,7 +267,7 @@ async function reiniciarConversacion() {
   paso = 2;
 }
 
-// --- Inicio ---
+// --- Iniciar conversación ---
 async function iniciarConversacion() {
   mensajes = cargarHistorial();
   if (mensajes.length === 0) {
@@ -354,7 +354,7 @@ async function procesarEntrada(input) {
       await responder("Puedes contactarnos al teléfono 645 059878 o visitar nuestra web https://j-ortiz-web.netlify.app/ para más detalles.");
       await responder('Si deseas comenzar de nuevo, escribe "reiniciar".');
 
-      // 👇 Aquí se guarda en Google Sheets
+      // Guardar en Google Sheets
       await guardarEnGoogleSheets();
 
       const seccionContacto = document.getElementById('contact');
@@ -405,8 +405,3 @@ chatClose.addEventListener('click', () => {
 chatRestart.addEventListener('click', async () => {
   await reiniciarConversacion();
 });
-
-
-
-
-  
